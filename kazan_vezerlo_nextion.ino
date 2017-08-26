@@ -2,6 +2,7 @@
 #include <Nextion.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <EEPROM.h>
 #define ONE_WIRE_BUS 2
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
@@ -16,6 +17,7 @@ boolean thermostat = true;
 boolean debug = false;
 float fTemp = 850.7;
 float vTemp = 42.5;
+byte profile = 1;
 
 boolean mainMenu = true;
 
@@ -29,11 +31,14 @@ Nextion myNextion(nextion, 115200);
 
 void setup() {
   Serial.begin(115200);
+  EEPROM.begin(512);
   myNextion.init();
   sensors.begin();
   Serial.println("START...");
   myNextion.setComponentText("fTemp", "PROGRAM");
   myNextion.setComponentText("vTemp", "START");
+  profile = EEPROM.read(0);
+  memRead();
   delay(1000);
   updMain();
 }

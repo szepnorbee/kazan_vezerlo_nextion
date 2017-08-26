@@ -12,6 +12,7 @@ void updMain() {
   } else {
     myNextion.sendCommand("run.val=0");
   }
+  myNextion.setComponentValue("n0", profile);
   Serial.println("DATA SENDING...");
 }
 
@@ -58,6 +59,10 @@ void dataIn(String message) {
   if (message=="65 0 2 0 ff ff ff" || message=="65 2 9 0 ff ff ff") {
     myNextion.sendCommand("page Timers1");
     updTimers1();
+  }
+  if (message=="65 1 a 0 ff ff ff" || message=="65 2 a 0 ff ff ff") {
+    memWrite();
+    myNextion.sendCommand("page Main");
   }
   if (message=="65 1 9 0 ff ff ff") {
     myNextion.sendCommand("page Timers2");
@@ -178,13 +183,93 @@ void dataIn(String message) {
   }
 /// Profile change ///
   if (message=="65 3 d 0 ff ff ff") {
+    profile = 1;
+    EEPROM.write(0, profile);
+    EEPROM.commit();
+    memRead();
     myNextion.sendCommand("page Main");
   }
   if (message=="65 3 e 0 ff ff ff") {
+    profile = 2;
+    EEPROM.write(0, profile);
+    EEPROM.commit();
+    memRead();
     myNextion.sendCommand("page Main");
   }
   if (message=="65 3 f 0 ff ff ff") {
+    profile = 3;
+    EEPROM.write(0, profile);
+    EEPROM.commit();
+    memRead();
     myNextion.sendCommand("page Main");
   }
 //////////////////////
 }
+
+void memWrite () {
+  /// Save data ///
+  switch (profile) {
+    case 1:
+      EEPROM.write(1, fStart);
+      EEPROM.write(2, fStop);
+      EEPROM.write(3, tStart);
+      EEPROM.write(4, tStop);
+      EEPROM.write(5, hiszter);
+      EEPROM.write(6, fanDelay);
+      EEPROM.commit();
+      break;
+
+    case 2:
+      EEPROM.write(7, fStart);
+      EEPROM.write(8, fStop);
+      EEPROM.write(9, tStart);
+      EEPROM.write(10, tStop);
+      EEPROM.write(11, hiszter);
+      EEPROM.write(12, fanDelay);
+      EEPROM.commit();
+      break;
+
+    case 3:
+      EEPROM.write(13, fStart);
+      EEPROM.write(14, fStop);
+      EEPROM.write(15, tStart);
+      EEPROM.write(16, tStop);
+      EEPROM.write(17, hiszter);
+      EEPROM.write(18, fanDelay);
+      EEPROM.commit();
+      break;
+  }
+}
+
+void memRead () {
+  /// Read data ///
+  switch (profile) {
+    case 1:
+      fStart = EEPROM.read(1);
+      fStop = EEPROM.read(2);
+      tStart = EEPROM.read(3);
+      tStop = EEPROM.read(4);
+      hiszter = EEPROM.read(5);
+      fanDelay = EEPROM.read(6);     
+      break;
+      
+    case 2:
+      fStart = EEPROM.read(7);
+      fStop = EEPROM.read(8);
+      tStart = EEPROM.read(9);
+      tStop = EEPROM.read(10);
+      hiszter = EEPROM.read(11);
+      fanDelay = EEPROM.read(12);     
+      break;
+      
+    case 3:
+      fStart = EEPROM.read(13);
+      fStop = EEPROM.read(14);
+      tStart = EEPROM.read(15);
+      tStop = EEPROM.read(16);
+      hiszter = EEPROM.read(17);
+      fanDelay = EEPROM.read(18);     
+      break;
+  }
+}
+
