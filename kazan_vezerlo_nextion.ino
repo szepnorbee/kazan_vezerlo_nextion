@@ -1,5 +1,10 @@
 #include <SoftwareSerial.h>
 #include <Nextion.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#define ONE_WIRE_BUS 2
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
 
 byte fStart = 5;
 byte fStop = 5;
@@ -25,6 +30,7 @@ Nextion myNextion(nextion, 115200);
 void setup() {
   Serial.begin(115200);
   myNextion.init();
+  sensors.begin();
   Serial.println("START...");
   myNextion.setComponentText("fTemp", "PROGRAM");
   myNextion.setComponentText("vTemp", "START");
@@ -45,6 +51,9 @@ void loop() {
     stdby=true;
    }
    ///////////////
+    sensors.setWaitForConversion(false);
+    sensors.requestTemperatures();
+    Serial.println(sensors.getTempCByIndex(0));
     updMain();
     }
   }
@@ -58,4 +67,3 @@ void loop() {
     dataIn(message);
   }  
 }
-

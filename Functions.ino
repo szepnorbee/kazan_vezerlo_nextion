@@ -176,4 +176,15 @@ void dataIn(String message) {
     fanDelay--;
     myNextion.setComponentText("levK", String(fanDelay));
   }
+/// Profile change ///
+  if (message=="65 3 d 0 ff ff ff") {
+    myNextion.sendCommand("page Main");
+  }
+  if (message=="65 3 e 0 ff ff ff") {
+    myNextion.sendCommand("page Main");
+  }
+  if (message=="65 3 f 0 ff ff ff") {
+    myNextion.sendCommand("page Main");
+  }
+//////////////////////
 }
