@@ -28,6 +28,12 @@ void updTimers2() {
   Serial.println("DATA SENDING...");
 }
 
+void updThermostat() {
+  myNextion.setComponentText("setTemp", String(setvTemp));
+  myNextion.setComponentText("setFire", String(setfTemp));
+  Serial.println("DATA SENDING...");
+}
+
 void updSettings() {
   myNextion.setComponentText("hiszt", String(hiszter));
   myNextion.setComponentText("levK", String(fanDelay));
@@ -50,81 +56,119 @@ void dataIn(String message) {
 // MENU NAVIGATION //////
   if (message=="65 0 3 0 ff ff ff") {
     myNextion.sendCommand("page Settings");
+    mainMenu=false;
     updSettings();
   }
-  if (message=="65 3 1 0 ff ff ff" || message=="65 1 b 0 ff ff ff" || message=="65 2 b 0 ff ff ff" || message=="65 4 1 0 ff ff ff") {
+/// Vissza gombok ///
+  if (message=="65 4 2 0 ff ff ff" || message=="65 5 1 0 ff ff ff" || message=="65 6 6 0 ff ff ff") {
     myNextion.sendCommand("page Main");
-    updMain();
+    mainMenu=true;
   }
-  if (message=="65 0 2 0 ff ff ff" || message=="65 2 9 0 ff ff ff") {
+  if (message=="65 2 b 0 ff ff ff" || message=="65 1 3 0 ff ff ff" || message=="65 3 3 0 ff ff ff") {
+    myNextion.sendCommand("page Main");
+    mainMenu=true;
+  }
+/////////////////////
+  if (message=="65 2 9 0 ff ff ff" || message=="65 0 2 0 ff ff ff") {
     myNextion.sendCommand("page Timers1");
+    mainMenu=false;
     updTimers1();
   }
-  if (message=="65 1 a 0 ff ff ff" || message=="65 2 a 0 ff ff ff") {
-    memWrite();
-    myNextion.sendCommand("page Main");
-  }
-  if (message=="65 1 9 0 ff ff ff") {
+  if (message=="65 1 1 0 ff ff ff") {
     myNextion.sendCommand("page Timers2");
+    mainMenu=false;
     updTimers2();
   }
   if (message=="65 0 1 0 ff ff ff") {
+    mainMenu=false;
     myNextion.sendCommand("page Manual");
+  }
+  if (message=="65 1 2 0 ff ff ff" || message=="65 2 a 0 ff ff ff" || message=="65 6 5 0 ff ff ff") {
+    mainMenu=false;
+    myNextion.sendCommand("page Saved");
+  }
+  if (message=="65 5 2 0 ff ff ff") {
+    memWrite();
+    myNextion.sendCommand("page Main");
+    mainMenu=true;
+  }
+  
+  if (message=="65 0 4 0 ff ff ff" || message=="65 0 5 0 ff ff ff") {
+    myNextion.sendCommand("page Thermostat");
+    mainMenu=false;
+    updThermostat();
   }
 
 /////////////////////////
 // SET VALUES ///////////
+/// Thermostat ///
+  if (message=="65 6 2 0 ff ff ff") {
+    setvTemp++;
+    myNextion.setComponentText("setTemp", String(setvTemp));
+  }
+  if (message=="65 6 1 0 ff ff ff") {
+    setvTemp--;
+    myNextion.setComponentText("setTemp", String(setvTemp));
+  }
+  if (message=="65 6 4 0 ff ff ff") {
+    setfTemp++;
+    myNextion.setComponentText("setFire", String(setfTemp));
+  }
+  if (message=="65 6 3 0 ff ff ff") {
+    setfTemp--;
+    myNextion.setComponentText("setFire", String(setfTemp));
+  }
 
 /// Fütés start ///
-  if (message=="65 1 4 0 ff ff ff") {
+  if (message=="65 1 6 0 ff ff ff") {
     fStart++;
     myNextion.setComponentText("fStartNr", String(fStart));
   }
-  if (message=="65 1 3 0 ff ff ff") {
+  if (message=="65 1 7 0 ff ff ff") {
     fStart+=5;
     myNextion.setComponentText("fStartNr", String(fStart));
   }
-  if (message=="65 1 1 0 ff ff ff") {
+  if (message=="65 1 4 0 ff ff ff") {
     fStart--;
     myNextion.setComponentText("fStartNr", String(fStart));
   }
-  if (message=="65 1 2 0 ff ff ff") {
+  if (message=="65 1 5 0 ff ff ff") {
     fStart-=5;
     myNextion.setComponentText("fStartNr", String(fStart));
   }
 
 /// Fütés stop ///
-  if (message=="65 1 6 0 ff ff ff") {
+  if (message=="65 1 a 0 ff ff ff") {
     fStop++;
     myNextion.setComponentText("fStopNr", String(fStop));
   }
-  if (message=="65 1 7 0 ff ff ff") {
+  if (message=="65 1 b 0 ff ff ff") {
     fStop+=5;
     myNextion.setComponentText("fStopNr", String(fStop));
   }
-  if (message=="65 1 5 0 ff ff ff") {
+  if (message=="65 1 8 0 ff ff ff") {
     fStop--;
     myNextion.setComponentText("fStopNr", String(fStop));
   }
-  if (message=="65 1 8 0 ff ff ff") {
+  if (message=="65 1 9 0 ff ff ff") {
     fStop-=5;
     myNextion.setComponentText("fStopNr", String(fStop));
   }
 
 /// Tartás start ///
-  if (message=="65 2 1 0 ff ff ff") {
+  if (message=="65 2 4 0 ff ff ff") {
     tStart++;
     myNextion.setComponentText("tStartNr", String(tStart));
   }
-  if (message=="65 2 7 0 ff ff ff") {
+  if (message=="65 2 3 0 ff ff ff") {
     tStart+=5;
     myNextion.setComponentText("tStartNr", String(tStart));
   }
-  if (message=="65 2 4 0 ff ff ff") {
+  if (message=="65 2 1 0 ff ff ff") {
     tStart--;
     myNextion.setComponentText("tStartNr", String(tStart));
   }
-  if (message=="65 2 6 0 ff ff ff") {
+  if (message=="65 2 2 0 ff ff ff") {
     tStart-=5;
     myNextion.setComponentText("tStartNr", String(tStart));
   }
@@ -134,20 +178,20 @@ void dataIn(String message) {
     tStop++;
     myNextion.setComponentText("tStopNr", String(tStop));
   }
-  if (message=="65 2 5 0 ff ff ff") {
+  if (message=="65 2 7 0 ff ff ff") {
     tStop+=5;
     myNextion.setComponentText("tStopNr", String(tStop));
   }
-  if (message=="65 2 2 0 ff ff ff") {
+  if (message=="65 2 6 0 ff ff ff") {
     tStop--;
     myNextion.setComponentText("tStopNr", String(tStop));
   }
-  if (message=="65 2 3 0 ff ff ff") {
+  if (message=="65 2 5 0 ff ff ff") {
     tStop-=5;
     myNextion.setComponentText("tStopNr", String(tStop));
   }
 /// Settings page ///
-  if (message=="65 3 3 0 ff ff ff") {
+  if (message=="65 4 6 0 ff ff ff") {
     if (thermostat==true) {
       thermostat=false;
     } else {
@@ -156,7 +200,7 @@ void dataIn(String message) {
   updSettings();
   }
   
-  if (message=="65 3 2 0 ff ff ff") {
+  if (message=="65 4 7 0 ff ff ff") {
     if (debug==true) {
       debug=false;
     } else {
@@ -165,48 +209,52 @@ void dataIn(String message) {
   updSettings();
   }
 
-  if (message=="65 3 4 0 ff ff ff") {
+  if (message=="65 4 a 0 ff ff ff") {
     hiszter++;
     myNextion.setComponentText("hiszt", String(hiszter));
   }
-  if (message=="65 3 7 0 ff ff ff") {
+  if (message=="65 4 8 0 ff ff ff") {
     hiszter--;
     myNextion.setComponentText("hiszt", String(hiszter));
   }
-  if (message=="65 3 5 0 ff ff ff") {
+  if (message=="65 4 b 0 ff ff ff") {
     fanDelay++;
     myNextion.setComponentText("levK", String(fanDelay));
   }
-  if (message=="65 3 6 0 ff ff ff") {
+  if (message=="65 4 9 0 ff ff ff") {
     fanDelay--;
     myNextion.setComponentText("levK", String(fanDelay));
   }
 /// Profile change ///
-  if (message=="65 3 d 0 ff ff ff") {
+  if (message=="65 4 3 0 ff ff ff") {
     profile = 1;
     EEPROM.write(0, profile);
     EEPROM.commit();
     memRead();
     myNextion.sendCommand("page Main");
+    mainMenu=true;
   }
-  if (message=="65 3 e 0 ff ff ff") {
+  if (message=="65 4 4 0 ff ff ff") {
     profile = 2;
     EEPROM.write(0, profile);
     EEPROM.commit();
     memRead();
     myNextion.sendCommand("page Main");
+    mainMenu=true;
   }
-  if (message=="65 3 f 0 ff ff ff") {
+  if (message=="65 4 5 0 ff ff ff") {
     profile = 3;
     EEPROM.write(0, profile);
     EEPROM.commit();
     memRead();
     myNextion.sendCommand("page Main");
+    mainMenu=true;
   }
 //////////////////////
 }
 
 void memWrite () {
+  Serial.println("SAVE TO EEPROM");
   /// Save data ///
   switch (profile) {
     case 1:
@@ -216,6 +264,7 @@ void memWrite () {
       EEPROM.write(4, tStop);
       EEPROM.write(5, hiszter);
       EEPROM.write(6, fanDelay);
+      EEPROM.write(19, setvTemp);
       EEPROM.commit();
       break;
 
@@ -226,6 +275,7 @@ void memWrite () {
       EEPROM.write(10, tStop);
       EEPROM.write(11, hiszter);
       EEPROM.write(12, fanDelay);
+      EEPROM.write(21, setvTemp);
       EEPROM.commit();
       break;
 
@@ -236,6 +286,7 @@ void memWrite () {
       EEPROM.write(16, tStop);
       EEPROM.write(17, hiszter);
       EEPROM.write(18, fanDelay);
+      EEPROM.write(23, setvTemp);
       EEPROM.commit();
       break;
   }
@@ -250,7 +301,8 @@ void memRead () {
       tStart = EEPROM.read(3);
       tStop = EEPROM.read(4);
       hiszter = EEPROM.read(5);
-      fanDelay = EEPROM.read(6);     
+      fanDelay = EEPROM.read(6);  
+      setvTemp = EEPROM.read(19);    
       break;
       
     case 2:
@@ -259,7 +311,8 @@ void memRead () {
       tStart = EEPROM.read(9);
       tStop = EEPROM.read(10);
       hiszter = EEPROM.read(11);
-      fanDelay = EEPROM.read(12);     
+      fanDelay = EEPROM.read(12);   
+      setvTemp = EEPROM.read(21);   
       break;
       
     case 3:
@@ -269,6 +322,7 @@ void memRead () {
       tStop = EEPROM.read(16);
       hiszter = EEPROM.read(17);
       fanDelay = EEPROM.read(18);     
+      setvTemp = EEPROM.read(23); 
       break;
   }
 }
