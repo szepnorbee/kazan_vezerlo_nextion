@@ -3,6 +3,8 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <EEPROM.h>
+#include "max6675.h"
+#include <SPI.h>
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -21,6 +23,12 @@ ESP8266HTTPUpdateServer httpUpdater;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
+int thermoDO = 4;
+int thermoCS = 5;
+int thermoCLK = 6;
+
+MAX6675 thermocouple;
+
 byte fStart = 5;
 byte fStop = 5;
 byte tStart = 5;
@@ -29,24 +37,28 @@ byte hiszter = 3;
 byte fanDelay = 10;
 boolean thermostat = true;
 boolean debug = false;
-float fTemp = 850.7;
+double fTemp = 222;
 float vTemp = 42.5;
 byte profile = 1;
 
 /// VEZÉRLÉS ///
-const int heatPin = 10;
-const int fanPin = 11;
+const int heatPin = 15;
+const int fanPin = 13;
 const int motorPin = 12;
-const int ledPin = 13;
 boolean motorState = HIGH; 
 boolean fanState = HIGH;
 boolean manual = false;
-boolean reqHeat = false;
+boolean reqHeat = true;
 /// Hőmérséklet szabályozás ///
 byte setvTemp = 60;
 int setfTemp = 800;
 float tempC = 0;
 
+const long egyezer = 1000;       //másodperc
+const long hatvanezer = 60000;   //perc
+unsigned long elozoMillis = 0;
+unsigned long OnTime = 0;
+unsigned long OffTime = 0;
 ////////////////
 
 boolean mainMenu = true;
@@ -60,6 +72,9 @@ SoftwareSerial nextion(4, 5);// Nextion TX to pin 2 and RX to pin 3 of Arduino
 Nextion myNextion(nextion, 115200); 
 
 void setup() {
+  pinMode(fanPin, OUTPUT);
+  pinMode(heatPin, INPUT);
+  pinMode(motorPin, OUTPUT);
   WiFi.mode(WIFI_AP_STA);
   WiFi.begin(ssid, password);
   while(WiFi.waitForConnectResult() != WL_CONNECTED){
@@ -75,42 +90,68 @@ void setup() {
   EEPROM.begin(512);
   myNextion.init();
   sensors.begin();
+  thermocouple.begin(thermoCLK, thermoCS, thermoDO);
   Serial.println("START...");
   myNextion.setComponentText("fTemp", "PROGRAM");
   myNextion.setComponentText("vTemp", "START");
   profile = EEPROM.read(0);
   memRead();
   delay(1000);
-  updMain();
 }
 
 void loop() {
-// NEXTION UPDATE //
+  readInput();
+  updVar();
+////// NEXTION UPDATE ///////////////////////////
   unsigned long currentMillis = millis();
   if(currentMillis - previousMillis > interval) {
     previousMillis = currentMillis; 
     if(mainMenu==true) { 
-   /////Stdby/////
+   /////Stdby symbol/////
    if(stdby) {
     stdby=false;
    } else {
     stdby=true;
    }
-   ///////////////
+/////////////////////////////////////////////////
     updMain();
     }
     sensors.setWaitForConversion(false);
     sensors.requestTemperatures();
     Serial.println(sensors.getTempCByIndex(0));
+    vTemp = sensors.getTempCByIndex(0);
+    Serial.print(F("reqHeat (1-Futes / 0-Tartas : "));Serial.println(reqHeat);
+    fTemp = (thermocouple.readCelsius());
   }
-////////////////////
+//////////////////////////////////////////////////
 
   String message = myNextion.listen();
-
   if (message != "") { // if a message is received...
     Serial.print("MESSAGE: ");
     Serial.println(message); //...print it out
     dataIn(message);
   }  
+//// CSIGA VEZÉRLÉS ////////
+  unsigned long aktualisMillis = millis();
+
+  if ((motorState == LOW) && (aktualisMillis - elozoMillis >= OnTime))
+  {
+    if (manual == false) {
+      motorState = HIGH;  // Turn it off
+      elozoMillis = aktualisMillis;
+      digitalWrite(motorPin, motorState);
+    }
+  }
+  else if ((motorState == HIGH) && (aktualisMillis - elozoMillis >= OffTime))
+  {
+    if (manual == false) {
+      motorState = LOW;  // turn it on
+      elozoMillis = aktualisMillis;
+      digitalWrite(motorPin, motorState);
+    }
+  }
+//// LOOP without delay ///////////////////////  
   httpServer.handleClient(); // WEB UPDATE
+
+///////////////////////////////////////////////
 }

@@ -111,11 +111,11 @@ void dataIn(String message) {
     myNextion.setComponentText("setTemp", String(setvTemp));
   }
   if (message=="65 6 4 0 ff ff ff") {
-    setfTemp++;
+    setfTemp+=10;
     myNextion.setComponentText("setFire", String(setfTemp));
   }
   if (message=="65 6 3 0 ff ff ff") {
-    setfTemp--;
+    setfTemp-=10;
     myNextion.setComponentText("setFire", String(setfTemp));
   }
 
@@ -327,3 +327,40 @@ void memRead () {
   }
 }
 
+void updVar() {
+
+  if (reqHeat == true) { 
+    OnTime = fStart * egyezer;
+    OffTime = fStop * egyezer;    
+  } else {
+    OnTime = tStart * egyezer;
+    OffTime = tStop * hatvanezer;   //ez percben van
+  }
+}
+
+//////////////////////////ÜZEMMÓD VÁLTÁS - BEMENETI JEL//////////////////////////
+void readInput() {
+  if (thermostat == false) {         // Bemenet vezérelt üzemmód
+
+    if (digitalRead(heatPin) == LOW) {       // Ha alacsony akkor fűtűnk
+      delay(50);
+      if (digitalRead(heatPin) == LOW) {
+        reqHeat = true;
+        digitalWrite(fanPin, LOW);         // Ventillátor bekapcsolása
+      } else {
+        reqHeat = false;
+        digitalWrite(fanPin, HIGH);        // Ventillátor kikapcsolása
+      }
+    }
+  } else if (thermostat == true) {   // Thermostat vezérelt üzemmód
+    //valami
+    if (tempC < setvTemp - hiszter && digitalRead(heatPin) == LOW) {
+      reqHeat = true;
+      digitalWrite(fanPin, LOW);         // Ventillátor bekapcsolása
+    }
+    if (tempC >= setvTemp || digitalRead(heatPin) == HIGH) {
+      reqHeat = false;
+      digitalWrite(fanPin, HIGH);         // Ventillátor kikapcsolása
+    }
+  }
+}
