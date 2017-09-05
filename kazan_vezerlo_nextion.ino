@@ -3,8 +3,8 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <EEPROM.h>
-#include "max6675.h"
 #include <SPI.h>
+#include "Adafruit_MAX31855.h"
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -19,15 +19,14 @@ const char* password = "Kicsim1986";
 ESP8266WebServer httpServer(80);
 ESP8266HTTPUpdateServer httpUpdater;
 
+#define MAXDO   1
+#define MAXCS   3
+#define MAXCLK  16
+
 #define ONE_WIRE_BUS 2
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
-
-int thermoDO = 4;
-int thermoCS = 5;
-int thermoCLK = 6;
-
-MAX6675 thermocouple;
+Adafruit_MAX31855 thermocouple(MAXCLK, MAXCS, MAXDO);
 
 byte fStart = 5;
 byte fStop = 5;
@@ -42,9 +41,9 @@ float vTemp = 42.5;
 byte profile = 1;
 
 /// VEZÉRLÉS ///
-const int heatPin = 15;
-const int fanPin = 13;
-const int motorPin = 12;
+const int heatPin = 13;
+const int fanPin = 12;
+const int motorPin = 14;
 boolean motorState = HIGH; 
 boolean fanState = HIGH;
 boolean manual = false;
@@ -90,7 +89,6 @@ void setup() {
   EEPROM.begin(512);
   myNextion.init();
   sensors.begin();
-  thermocouple.begin(thermoCLK, thermoCS, thermoDO);
   Serial.println("START...");
   myNextion.setComponentText("fTemp", "PROGRAM");
   myNextion.setComponentText("vTemp", "START");
@@ -121,7 +119,7 @@ void loop() {
     Serial.println(sensors.getTempCByIndex(0));
     vTemp = sensors.getTempCByIndex(0);
     Serial.print(F("reqHeat (1-Futes / 0-Tartas : "));Serial.println(reqHeat);
-    fTemp = (thermocouple.readCelsius());
+    fTemp = thermocouple.readCelsius();
   }
 //////////////////////////////////////////////////
 
