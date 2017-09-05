@@ -66,7 +66,7 @@ long previousMillis = 0;
 long interval = 1000; 
 boolean stdby = true;
 
-SoftwareSerial nextion(4, 5);// Nextion TX to pin 2 and RX to pin 3 of Arduino
+SoftwareSerial nextion(4, 5);
 
 Nextion myNextion(nextion, 115200); 
 
@@ -116,17 +116,13 @@ void loop() {
     }
     sensors.setWaitForConversion(false);
     sensors.requestTemperatures();
-    Serial.println(sensors.getTempCByIndex(0));
     vTemp = sensors.getTempCByIndex(0);
-    Serial.print(F("reqHeat (1-Futes / 0-Tartas : "));Serial.println(reqHeat);
     fTemp = thermocouple.readCelsius();
   }
 //////////////////////////////////////////////////
 
   String message = myNextion.listen();
   if (message != "") { // if a message is received...
-    Serial.print("MESSAGE: ");
-    Serial.println(message); //...print it out
     dataIn(message);
   }  
 //// CSIGA VEZÉRLÉS ////////

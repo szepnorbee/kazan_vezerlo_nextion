@@ -13,25 +13,21 @@ void updMain() {
     myNextion.sendCommand("run.val=0");
   }
   myNextion.setComponentValue("n0", profile);
-  Serial.println("DATA SENDING...");
 }
 
 void updTimers1() {
   myNextion.setComponentText("fStartNr", String(fStart));
   myNextion.setComponentText("fStopNr", String(fStop));
-  Serial.println("DATA SENDING...");
 }
 
 void updTimers2() {
   myNextion.setComponentText("tStartNr", String(tStart));
   myNextion.setComponentText("tStopNr", String(tStop));
-  Serial.println("DATA SENDING...");
 }
 
 void updThermostat() {
   myNextion.setComponentText("setTemp", String(setvTemp));
   myNextion.setComponentText("setFire", String(setfTemp));
-  Serial.println("DATA SENDING...");
 }
 
 void updSettings() {
@@ -48,11 +44,9 @@ void updSettings() {
   } else {
     myNextion.setComponentText("debugState", "KI");
   }
-  Serial.println("DATA SENDING...");
 }
 
 void dataIn(String message) {
-  Serial.println("INCOMING");
 // MENU NAVIGATION //////
   if (message=="65 0 3 0 ff ff ff") {
     myNextion.sendCommand("page Settings");
@@ -254,7 +248,6 @@ void dataIn(String message) {
 }
 
 void memWrite () {
-  Serial.println("SAVE TO EEPROM");
   /// Save data ///
   switch (profile) {
     case 1:
