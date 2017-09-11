@@ -46,6 +46,20 @@ void updSettings() {
   }
 }
 
+void updWlan() {
+  myNextion.setComponentText("wlStatus", "IP:" + WiFi.localIP().toString());
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  //int n = WiFi.scanNetworksAsync();
+  int n = WiFi.scanNetworks();
+  for (int i = 0; i < n; ++i) {
+    myNextion.setComponentText("wl" + String(i), String(WiFi.SSID(i)) + " (" + String(WiFi.RSSI(i)) + "dBm), CH:" + String(WiFi.channel(i)));
+  }
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.begin(ssid, password);
+}
+
+
 void dataIn(String message) {
 // MENU NAVIGATION //////
   if (message=="65 0 3 0 ff ff ff") {
@@ -54,7 +68,7 @@ void dataIn(String message) {
     updSettings();
   }
 /// Vissza gombok ///
-  if (message=="65 4 2 0 ff ff ff" || message=="65 5 1 0 ff ff ff" || message=="65 6 6 0 ff ff ff") {
+  if (message=="65 4 2 0 ff ff ff" || message=="65 5 1 0 ff ff ff" || message=="65 6 6 0 ff ff ff" || message=="65 7 1 0 ff ff ff") {
     myNextion.sendCommand("page Main");
     mainMenu=true;
   }
@@ -183,6 +197,12 @@ void dataIn(String message) {
   if (message=="65 2 5 0 ff ff ff") {
     tStop-=5;
     myNextion.setComponentText("tStopNr", String(tStop));
+  }
+/// Wifi page ////
+  if (message=="65 6 9 0 ff ff ff") {
+    myNextion.sendCommand("page Wifi");
+    updWlan();
+    mainMenu=false;    
   }
 /// Settings page ///
   if (message=="65 4 6 0 ff ff ff") {
