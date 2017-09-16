@@ -11,6 +11,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
+#include "ThingSpeak.h"
 
 const char* host = "esp8266-webupdate";
 const char* ssid = "ASUS_HUN";
@@ -28,12 +29,17 @@ OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 Adafruit_MAX31855 thermocouple(MAXCLK, MAXCS, MAXDO);
 
+unsigned long myChannelNumber = 329835;
+const char * myWriteAPIKey = "XVJ77W9F8SPZ4SL4";
+
 byte fStart = 5;
 byte fStop = 5;
 byte tStart = 5;
 byte tStop = 5;
 byte hiszter = 3;
 byte fanDelay = 10;
+boolean fanStart = true;
+byte fanCounter = 0;
 boolean thermostat = true;
 boolean debug = false;
 double fTemp = 222;
@@ -44,7 +50,7 @@ byte profile = 1;
 const int heatPin = 13;
 const int fanPin = 12;
 const int motorPin = 14;
-boolean motorState = HIGH; 
+boolean motorState = HIGH;
 boolean fanState = HIGH;
 boolean manual = false;
 boolean reqHeat = true;
@@ -62,21 +68,23 @@ unsigned long OffTime = 0;
 
 boolean mainMenu = true;
 
-long previousMillis = 0; 
-long interval = 1000; 
+long previousMillis = 0;
+long interval = 1000;
 boolean stdby = true;
 
 SoftwareSerial nextion(4, 5);
 
-Nextion myNextion(nextion, 115200); 
+Nextion myNextion(nextion, 115200);
 
 void setup() {
   pinMode(fanPin, OUTPUT);
   pinMode(heatPin, INPUT);
   pinMode(motorPin, OUTPUT);
+  digitalWrite(fanPin, HIGH); // kikapcsoljuk a kimeneteket
+  digitalWrite(motorPin, HIGH);
   WiFi.mode(WIFI_AP_STA);
   WiFi.begin(ssid, password);
-  while(WiFi.waitForConnectResult() != WL_CONNECTED){
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     WiFi.begin(ssid, password);
     Serial.println("WiFi failed, retrying.");
   }
@@ -84,7 +92,7 @@ void setup() {
   httpUpdater.setup(&httpServer);
   httpServer.begin();
   MDNS.addService("http", "tcp", 80);
-  
+
   Serial.begin(115200);
   EEPROM.begin(512);
   myNextion.init();
@@ -100,32 +108,52 @@ void setup() {
 void loop() {
   readInput();
   updVar();
-////// NEXTION UPDATE ///////////////////////////
+  ////// NEXTION UPDATE ///////////////////////////
   unsigned long currentMillis = millis();
-  if(currentMillis - previousMillis > interval) {
-    previousMillis = currentMillis; 
-    if(mainMenu==true) { 
-   /////Stdby symbol/////
-   if(stdby) {
-    stdby=false;
-   } else {
-    stdby=true;
-   }
-/////////////////////////////////////////////////
-    updMain();
+  if (currentMillis - previousMillis > interval) {
+    previousMillis = currentMillis;
+    if (mainMenu == true) {
+      /////Stdby symbol/////
+      if (stdby) {
+        stdby = false;
+      } else {
+        stdby = true;
+      }
+      /////////////////////////////////////////////////
+      updMain();
     }
     sensors.setWaitForConversion(false);
     sensors.requestTemperatures();
     vTemp = sensors.getTempCByIndex(0);
     fTemp = thermocouple.readCelsius();
-  }
-//////////////////////////////////////////////////
+    byte t1 = fTemp / 2;
+    byte t2 = vTemp / 2;
+    
+    nextion.print("add 1,0,");
+    nextion.print(map(t1,0,1200,10,115)); 
+    nextion.write(0xFF);
+    nextion.write(0xFF);
+    nextion.write(0xFF);
+
+    nextion.print("add 4,0,");
+    nextion.print(map(t2,0,128,10,115));
+    nextion.write(0xFF);
+    nextion.write(0xFF);
+    nextion.write(0xFF);
+///////// Ventillátor késleltetés tartó üzemen/////
+     if (fanStart == true) {
+       fanCounter++;
+     }
+    }
+   
+  
+  //////////////////////////////////////////////////
 
   String message = myNextion.listen();
   if (message != "") { // if a message is received...
     dataIn(message);
-  }  
-//// CSIGA VEZÉRLÉS ////////
+  }
+  //// CSIGA VEZÉRLÉS ////////
   unsigned long aktualisMillis = millis();
 
   if ((motorState == LOW) && (aktualisMillis - elozoMillis >= OnTime))
@@ -144,8 +172,20 @@ void loop() {
       digitalWrite(motorPin, motorState);
     }
   }
-//// LOOP without delay ///////////////////////  
+  //// LOOP without delay ///////////////////////
   httpServer.handleClient(); // WEB UPDATE
+ 
+  if (reqHeat == false & motorState == LOW) {
+    digitalWrite(fanPin, LOW);         // Ventillátor bekapcsolása
+    fanStart = true;
+    Serial.println("Eggyes");
+  }
 
-///////////////////////////////////////////////
+  if (fanCounter > fanDelay) {
+    digitalWrite(fanPin, HIGH);         // Ventillátor kikapcsolása
+    fanCounter = 0;
+    fanStart = false;
+  }
+  
+  ///////////////////////////////////////////////
 }
