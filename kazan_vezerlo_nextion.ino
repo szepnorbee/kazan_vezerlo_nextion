@@ -14,7 +14,7 @@
 #include "ThingSpeak.h"
 
 const char* host = "esp8266-webupdate";
-const char* ssid = "ASUS_HUN";
+const char* ssid = "ENIKO";
 const char* password = "Kicsim1986";
 
 ESP8266WebServer httpServer(80);
@@ -71,7 +71,7 @@ boolean mainMenu = true;
 long previousMillis = 0;
 long interval = 1000;
 boolean stdby = true;
-
+byte wl = 0;
 SoftwareSerial nextion(4, 5);
 
 Nextion myNextion(nextion, 115200);
@@ -84,10 +84,14 @@ void setup() {
   digitalWrite(motorPin, HIGH);
   WiFi.mode(WIFI_AP_STA);
   WiFi.begin(ssid, password);
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+  delay(1000);
+  if (WiFi.waitForConnectResult() != WL_CONNECTED){
     WiFi.begin(ssid, password);
-    Serial.println("WiFi failed, retrying.");
   }
+  // while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+  //  WiFi.begin(ssid, password);
+  //  Serial.println("WiFi failed, retrying.");
+  // }
   MDNS.begin(host);
   httpUpdater.setup(&httpServer);
   httpServer.begin();
