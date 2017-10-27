@@ -11,7 +11,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
-#include "ThingSpeak.h"
+#include<EasyDDNS.h>
 
 const char* host = "esp8266-webupdate";
 const char* ssid = "ENIKO";
@@ -28,9 +28,6 @@ ESP8266HTTPUpdateServer httpUpdater;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 Adafruit_MAX31855 thermocouple(MAXCLK, MAXCS, MAXDO);
-
-unsigned long myChannelNumber = 329835;
-const char * myWriteAPIKey = "XVJ77W9F8SPZ4SL4";
 
 byte fStart = 5;
 byte fStop = 5;
@@ -96,6 +93,8 @@ void setup() {
   httpUpdater.setup(&httpServer);
   httpServer.begin();
   MDNS.addService("http", "tcp", 80);
+  EasyDDNS.service("duckdns");
+  EasyDDNS.client("zoli.duckdns.org","6b4cbed5-cec9-4699-a87b-269cc6dcae79");
 
   Serial.begin(115200);
   EEPROM.begin(512);
@@ -112,6 +111,7 @@ void setup() {
 void loop() {
   readInput();
   updVar();
+  EasyDDNS.update(10000);
   ////// NEXTION UPDATE ///////////////////////////
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis > interval) {
