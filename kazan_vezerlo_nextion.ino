@@ -11,13 +11,15 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
+#include <BlynkSimpleEsp8266.h>
 //#include<EasyDDNS.h>
 
 const char* host = "esp8266-webupdate";
 const char* ssid = "TP-Link";
 const char* password = "zolika11";
+char auth[] = "14ac0aae450047428d80a82676a2fa93";   // Blynk
 
-//const char* ssid = "ASUS_HUN";
+//const char* ssid = "ENIKO";
 //const char* password = "Kicsim1986";
 
 ESP8266WebServer httpServer(80);
@@ -77,6 +79,25 @@ SoftwareSerial nextion(4, 5);
 
 Nextion myNextion(nextion, 115200);
 
+void runBlynk() {
+  if (WiFi.status() == WL_CONNECTED) {
+    Blynk.run();
+  }
+}
+
+void sendBlynk() {
+  if (WiFi.status() == WL_CONNECTED) {
+    Blynk.virtualWrite(V2, millis() / 1000);
+    if(reqHeat) {
+     Blynk.virtualWrite(V7, "Futes"); 
+    } else {
+     Blynk.virtualWrite(V7, "Tartas");  
+    }
+    Blynk.virtualWrite(V0, fTemp); 
+    Blynk.virtualWrite(V1, vTemp); 
+  }
+}
+
 void handle_root() {
   httpServer.send(200, "text/plain", "A kazan vezerlo uzemel...");
 }
@@ -98,6 +119,8 @@ void setup() {
   httpUpdater.setup(&httpServer);
   httpServer.begin();
   MDNS.addService("http", "tcp", 80);
+  Blynk.config(auth);
+  Blynk.connect(10);
   Serial.begin(115200);
   EEPROM.begin(512);
   myNextion.init();
@@ -115,6 +138,7 @@ void loop() {
   readInput();
   updVar();
   httpServer.handleClient(); // WEB UPDATE
+  runBlynk();
   ////// NEXTION UPDATE ///////////////////////////
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis > interval) {
@@ -151,6 +175,7 @@ void loop() {
      if (fanStart == true) {
        fanCounter++;
      }
+    sendBlynk();
     }
    
   
