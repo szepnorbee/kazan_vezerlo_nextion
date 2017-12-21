@@ -213,6 +213,43 @@ void dataIn(String message) {
     updWlan();
     mainMenu = false;
   }
+  /// MANUAL MODE /////
+  // Manual page
+  if (message == "65 0 1 0 ff ff ff") {
+    myNextion.sendCommand("page Manual");
+    manual = true;
+    mainMenu = false;
+    digitalWrite(fanPin, HIGH);  /// Mindent kikapcsolunk
+    digitalWrite(motorPin, HIGH);
+  }
+  // Behajtas gomb
+  if (message == "65 3 1 0 ff ff ff") {
+    digitalWrite(motorPin, LOW);
+    delay(2000);    /// Behajtás be 2s-re
+    digitalWrite(motorPin, HIGH);
+  }
+  // Ventillator gomb
+  if (message == "65 3 2 0 ff ff ff") {
+    if (fanFlag==false) {
+      fanFlag = true;
+      digitalWrite(fanPin, LOW);  // Venti be
+    } else {
+      fanFlag = false;
+      digitalWrite(fanPin, HIGH); // Venti ki
+    }
+  }
+  // Vissza gomb
+  if (message == "65 3 3 0 ff ff ff") {
+    myNextion.sendCommand("page Main");
+    fanFlag = false;
+    manual = false;
+    mainMenu = true;
+    if ( reqHeat== true) {
+      digitalWrite(fanPin, LOW);  // be
+    } else {
+      digitalWrite(fanPin, HIGH); // ki
+    }
+  }  
   /// Settings page ///
   if (message == "65 4 6 0 ff ff ff") {
     if (thermostat == true) {

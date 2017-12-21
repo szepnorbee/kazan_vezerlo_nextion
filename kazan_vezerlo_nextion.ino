@@ -11,11 +11,14 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
-#include<EasyDDNS.h>
+//#include<EasyDDNS.h>
 
 const char* host = "esp8266-webupdate";
-const char* ssid = "ENIKO";
-const char* password = "Kicsim1986";
+const char* ssid = "TP-Link";
+const char* password = "zolika11";
+
+//const char* ssid = "ASUS_HUN";
+//const char* password = "Kicsim1986";
 
 ESP8266WebServer httpServer(80);
 ESP8266HTTPUpdateServer httpUpdater;
@@ -37,6 +40,7 @@ byte hiszter = 3;
 byte fanDelay = 10;
 boolean fanStart = true;
 byte fanCounter = 0;
+boolean fanFlag = 0;
 boolean thermostat = true;
 boolean debug = false;
 double fTemp = 222;
@@ -73,6 +77,10 @@ SoftwareSerial nextion(4, 5);
 
 Nextion myNextion(nextion, 115200);
 
+void handle_root() {
+  httpServer.send(200, "text/plain", "A kazan vezerlo uzemel...");
+}
+
 void setup() {
   pinMode(fanPin, OUTPUT);
   pinMode(heatPin, INPUT);
@@ -85,17 +93,11 @@ void setup() {
   if (WiFi.waitForConnectResult() != WL_CONNECTED){
     WiFi.begin(ssid, password);
   }
-  // while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-  //  WiFi.begin(ssid, password);
-  //  Serial.println("WiFi failed, retrying.");
-  // }
+  httpServer.on("/", handle_root);
   MDNS.begin(host);
   httpUpdater.setup(&httpServer);
   httpServer.begin();
   MDNS.addService("http", "tcp", 80);
-  EasyDDNS.service("duckdns");
-  EasyDDNS.client("zoli.duckdns.org","6b4cbed5-cec9-4699-a87b-269cc6dcae79");
-
   Serial.begin(115200);
   EEPROM.begin(512);
   myNextion.init();
@@ -109,9 +111,10 @@ void setup() {
 }
 
 void loop() {
+  
   readInput();
   updVar();
-  EasyDDNS.update(10000);
+  httpServer.handleClient(); // WEB UPDATE
   ////// NEXTION UPDATE ///////////////////////////
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis > interval) {
@@ -160,29 +163,24 @@ void loop() {
   //// CSIGA VEZÉRLÉS ////////
   unsigned long aktualisMillis = millis();
 
+if (manual == false) {
   if ((motorState == LOW) && (aktualisMillis - elozoMillis >= OnTime))
   {
-    if (manual == false) {
-      motorState = HIGH;  // Turn it off
-      elozoMillis = aktualisMillis;
-      digitalWrite(motorPin, motorState);
-    }
+    motorState = HIGH;  // Turn it off
+    elozoMillis = aktualisMillis;
+    digitalWrite(motorPin, motorState);
   }
   else if ((motorState == HIGH) && (aktualisMillis - elozoMillis >= OffTime))
   {
-    if (manual == false) {
-      motorState = LOW;  // turn it on
-      elozoMillis = aktualisMillis;
-      digitalWrite(motorPin, motorState);
-    }
+    motorState = LOW;  // turn it on
+    elozoMillis = aktualisMillis;
+    digitalWrite(motorPin, motorState);
   }
   //// LOOP without delay ///////////////////////
-  httpServer.handleClient(); // WEB UPDATE
  
   if (reqHeat == false & motorState == LOW) {
     digitalWrite(fanPin, LOW);         // Ventillátor bekapcsolása
     fanStart = true;
-    Serial.println("Eggyes");
   }
 
   if (fanCounter > fanDelay) {
@@ -190,6 +188,6 @@ void loop() {
     fanCounter = 0;
     fanStart = false;
   }
-  
+ }
   ///////////////////////////////////////////////
 }
